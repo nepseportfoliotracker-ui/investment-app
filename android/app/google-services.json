@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1010478727682",
+    "project_id": "nepse-investments",
+    "storage_bucket": "nepse-investments.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1010478727682:android:1ac69595531d1c26021d1b",
+        "android_client_info": {
+          "package_name": "com.nepseagent.investment_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0sIcInYc_70Isl4BzFMUwwxf5dstwbo8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
