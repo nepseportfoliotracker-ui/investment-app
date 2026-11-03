@@ -8,21 +8,19 @@ import 'api.dart';
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-/// Background and terminated-app messages are shown by the system from the
-/// notification payload, so there is nothing to do here.
-@pragma('vm:entry-point')
-Future<void> _onBackgroundMessage(RemoteMessage message) async {}
-
 /// Starts Firebase Messaging.  If Firebase is not configured yet the app still
 /// runs; alerts are then only visible in the Alerts tab.
 Future<bool> initPush({required VoidCallback onMessage}) async {
   try {
-    await Firebase.initializeApp();
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+    }
   } catch (e) {
     debugPrint('Push disabled, Firebase not configured: $e');
     return false;
   }
-  FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
+  // Background handler is registered in main(); re-registering here is harmless
+  // but unnecessary, so we leave it.
   await FirebaseMessaging.instance.requestPermission();
 
   FirebaseMessaging.onMessage.listen((message) {

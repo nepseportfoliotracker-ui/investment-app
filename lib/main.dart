@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
 import 'api.dart';
@@ -6,8 +8,20 @@ import 'screens/home_screen.dart';
 import 'screens/setup_screen.dart';
 import 'screens/setup_wizard.dart';
 
-void main() {
+@pragma('vm:entry-point')
+Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
+  // Background/terminated messages with a notification payload are shown by
+  // the system; nothing extra to do here.
+}
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
+  } catch (e) {
+    debugPrint('Push disabled, Firebase not configured: $e');
+  }
   runApp(const InvestmentApp());
 }
 

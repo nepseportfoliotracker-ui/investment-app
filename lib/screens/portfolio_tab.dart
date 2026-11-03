@@ -196,7 +196,6 @@ class _PortfolioTabState extends State<PortfolioTab> {
                 ),
               ),
               subtitle: Text(
-                'Needed for ${c.pendingCount} pending buys (${c.unitsPerBuy} units each). '
                 'Required ${money(c.required)}.',
                 style: TextStyle(color: theme.colorScheme.onErrorContainer),
               ),
