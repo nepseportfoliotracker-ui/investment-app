@@ -160,7 +160,7 @@ class _PortfolioTabState extends State<PortfolioTab> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _stat('Cash', money(p.total))),
+                    Expanded(child: _stat('Cash', money(p.cash))),
                     Expanded(child: _stat('Holdings', money(p.investedCost))),
                   ],
                 ),
