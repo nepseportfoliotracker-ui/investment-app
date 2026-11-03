@@ -121,7 +121,7 @@ class _PortfolioTabState extends State<PortfolioTab> {
     final theme = Theme.of(context);
     final c = p.collateral;
     final deposit = c.depositNeeded;
-    final total = p.cash + p.investedCost;
+    final total = p.total;
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
       children: [
@@ -145,7 +145,7 @@ class _PortfolioTabState extends State<PortfolioTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Total (cash + holdings at cost)',
+                  'Total (cash + holdings + collateral)',
                   style: theme.textTheme.labelLarge,
                 ),
                 Text(money(total), style: theme.textTheme.headlineMedium),
@@ -160,7 +160,7 @@ class _PortfolioTabState extends State<PortfolioTab> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _stat('Cash', money(p.cash))),
+                    Expanded(child: _stat('Cash', money(p.total))),
                     Expanded(child: _stat('Holdings', money(p.investedCost))),
                   ],
                 ),
@@ -169,7 +169,7 @@ class _PortfolioTabState extends State<PortfolioTab> {
                   children: [
                     Expanded(
                       child: _stat(
-                        'Collateral (bot)',
+                        'Collateral',
                         c.collateral == null ? '-' : money(c.collateral!),
                       ),
                     ),
@@ -189,15 +189,11 @@ class _PortfolioTabState extends State<PortfolioTab> {
                 color: theme.colorScheme.onErrorContainer,
               ),
               title: Text(
-                'Deposit ${money(deposit)} collateral',
+                'Deposit ${money(deposit)} to collateral',
                 style: TextStyle(
                   color: theme.colorScheme.onErrorContainer,
                   fontWeight: FontWeight.bold,
                 ),
-              ),
-              subtitle: Text(
-                'Required ${money(c.required)}.',
-                style: TextStyle(color: theme.colorScheme.onErrorContainer),
               ),
             ),
           ),

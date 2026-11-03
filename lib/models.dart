@@ -47,6 +47,7 @@ class Collateral {
     required this.checkedAt,
     required this.fresh,
     required this.collateral,
+    required this.cash,
     required this.pendingCount,
     required this.required,
     required this.depositNeeded,
@@ -56,6 +57,7 @@ class Collateral {
   final String? checkedAt;
   final bool fresh;
   final double? collateral;
+  final double cash;
   final int pendingCount;
   final double required;
   final double? depositNeeded;
@@ -65,6 +67,7 @@ class Collateral {
     checkedAt: j['checked_at'] as String?,
     fresh: j['fresh'] == true,
     collateral: j['collateral'] == null ? null : _num(j['collateral']),
+    cash: _num(j['cash']),
     pendingCount: (j['pending_buys'] as List?)?.length ?? 0,
     required: _num(j['required']),
     depositNeeded: j['deposit_needed'] == null
@@ -96,6 +99,7 @@ class Portfolio {
   Portfolio({
     required this.configured,
     required this.cash,
+    required this.total,
     required this.realizedPnl,
     required this.investedCost,
     required this.holdings,
@@ -106,6 +110,7 @@ class Portfolio {
 
   final bool configured;
   final double cash;
+  final double total;
   final double realizedPnl;
   final double investedCost;
   final List<Holding> holdings;
@@ -116,6 +121,7 @@ class Portfolio {
   factory Portfolio.fromJson(Map<String, dynamic> j) => Portfolio(
     configured: j['configured'] == true,
     cash: _num(j['cash']),
+    total: _num(j['total']),
     realizedPnl: _num(j['realized_pnl']),
     investedCost: _num(j['invested_cost']),
     holdings: ((j['holdings'] as List?) ?? [])
