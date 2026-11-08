@@ -28,6 +28,7 @@ class PortfolioTab extends StatefulWidget {
 
 class _PortfolioTabState extends State<PortfolioTab> {
   late Future<Portfolio> _future = widget.api.portfolio();
+  Portfolio? _last;
 
   @override
   void initState() {
@@ -56,7 +57,7 @@ class _PortfolioTabState extends State<PortfolioTab> {
   void _transfer() =>
       showCashSheet(context, widget.api, onSaved: _changed, kind: 'transfer');
 
-  void _actions() {
+  void _actions(Portfolio? p) {
     Widget item(String label, String hint, VoidCallback onTap) => InkWell(
       onTap: () {
         Navigator.pop(context);
@@ -107,6 +108,18 @@ class _PortfolioTabState extends State<PortfolioTab> {
                 'Money in or out of your bank',
                 () => showCashSheet(context, widget.api, onSaved: _changed),
               ),
+              if (p != null)
+                item(
+                  'Correct balances',
+                  'Set cash and collateral to the real figures',
+                  () => showBalancesSheet(
+                    context,
+                    widget.api,
+                    cash: p.cash,
+                    collateral: p.collateral.collateral ?? 0,
+                    onSaved: _changed,
+                  ),
+                ),
             ],
           ),
         ),
@@ -130,12 +143,13 @@ class _PortfolioTabState extends State<PortfolioTab> {
             if (snap.hasError) {
               return messageBody('Portfolio', '${snap.error}', error: true);
             }
+            _last = snap.data!;
             return _content(snap.data!);
           },
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _actions,
+        onPressed: () => _actions(_last),
         icon: const Icon(Icons.add, size: 18),
         label: const Text('Record'),
       ),
@@ -228,7 +242,25 @@ class _PortfolioTabState extends State<PortfolioTab> {
             rows: [
               for (final h in p.holdings)
                 [
-                  RuledTable.name(h.symbol),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: h.symbol,
+                          style: T.sans(
+                            weight: FontWeight.w600,
+                            color: T.textStrong,
+                          ),
+                        ),
+                        if (h.manual)
+                          TextSpan(
+                            text: '  app',
+                            style: T.sans(size: 10, color: T.faint),
+                          ),
+                      ],
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   RuledTable.num('${h.qty}'),
                   RuledTable.num(plain(h.avgPrice)),
                   RuledTable.num(plain(h.cost)),

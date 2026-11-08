@@ -9,6 +9,7 @@ class Holding {
     required this.qty,
     required this.avgPrice,
     required this.cost,
+    this.manual = false,
   });
 
   final String symbol;
@@ -16,11 +17,15 @@ class Holding {
   final double avgPrice;
   final double cost;
 
+  /// Shown from your app entries (the bot does not hold it).
+  final bool manual;
+
   factory Holding.fromJson(Map<String, dynamic> j) => Holding(
     symbol: '${j['symbol']}',
     qty: _int(j['qty']),
     avgPrice: _num(j['avg_price']),
     cost: _num(j['cost']),
+    manual: j['source'] == 'app',
   );
 }
 

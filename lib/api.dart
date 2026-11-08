@@ -110,6 +110,11 @@ class HubApi {
     });
   }
 
+  /// Correct cash and collateral to the real figures.
+  Future<void> setBalances({double? cash, double? collateral}) async {
+    await _post('/api/balances', {'cash': ?cash, 'collateral': ?collateral});
+  }
+
   Future<void> addCash({
     required String kind,
     required double amount,

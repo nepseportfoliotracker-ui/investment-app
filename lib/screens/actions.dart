@@ -32,6 +32,128 @@ Future<void> showCashSheet(
   );
 }
 
+/// Correct cash and collateral to what the bank and TMS really show.
+Future<void> showBalancesSheet(
+  BuildContext context,
+  HubApi api, {
+  required double cash,
+  required double collateral,
+  required VoidCallback onSaved,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => _BalancesSheet(
+      api: api,
+      cash: cash,
+      collateral: collateral,
+      onSaved: onSaved,
+    ),
+  );
+}
+
+class _BalancesSheet extends StatefulWidget {
+  const _BalancesSheet({
+    required this.api,
+    required this.cash,
+    required this.collateral,
+    required this.onSaved,
+  });
+
+  final HubApi api;
+  final double cash;
+  final double collateral;
+  final VoidCallback onSaved;
+
+  @override
+  State<_BalancesSheet> createState() => _BalancesSheetState();
+}
+
+class _BalancesSheetState extends State<_BalancesSheet> {
+  final _form = GlobalKey<FormState>();
+  late final _cash = TextEditingController(
+    text: widget.cash.toStringAsFixed(2),
+  );
+  late final _collateral = TextEditingController(
+    text: widget.collateral.toStringAsFixed(2),
+  );
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _cash.dispose();
+    _collateral.dispose();
+    super.dispose();
+  }
+
+  static double? _parse(String v) =>
+      double.tryParse(v.replaceAll(',', '').trim());
+
+  static String? _validate(String? v) =>
+      _parse(v ?? '') == null ? 'Enter an amount' : null;
+
+  Future<void> _save() async {
+    if (!_form.currentState!.validate()) return;
+    setState(() => _saving = true);
+    try {
+      await widget.api.setBalances(
+        cash: _parse(_cash.text),
+        collateral: _parse(_collateral.text),
+      );
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onSaved();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _Sheet(
+      title: 'Correct balances',
+      form: _form,
+      saving: _saving,
+      onSave: _save,
+      children: [
+        Text(
+          'Enter what your bank and TMS show now. The difference is recorded '
+          'as an adjustment; trades keep updating from these figures.',
+          style: T.sans(size: 12, color: T.muted, height: 16 / 12),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _cash,
+          keyboardType: const TextInputType.numberWithOptions(
+            decimal: true,
+            signed: true,
+          ),
+          decoration: const InputDecoration(labelText: 'Cash in bank (Rs)'),
+          validator: _validate,
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _collateral,
+          keyboardType: const TextInputType.numberWithOptions(
+            decimal: true,
+            signed: true,
+          ),
+          decoration: const InputDecoration(
+            labelText: 'Collateral in TMS (Rs)',
+          ),
+          validator: _validate,
+        ),
+      ],
+    );
+  }
+}
+
 class _TradeSheet extends StatefulWidget {
   const _TradeSheet({required this.api, required this.onSaved});
 
