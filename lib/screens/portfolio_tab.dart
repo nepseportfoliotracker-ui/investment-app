@@ -214,7 +214,6 @@ class _PortfolioTabState extends State<PortfolioTab> {
           Notice(
             title: 'Move cash to collateral',
             body:
-                "Today's buys need ${money(c.required)}. "
                 'Collateral ${money(coll)}, cash ${money(deposit)}.',
             action: 'Move',
             onAction: _transfer,
