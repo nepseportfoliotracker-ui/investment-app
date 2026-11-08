@@ -16,16 +16,17 @@ Future<void> showTradeSheet(
   );
 }
 
-/// Record a cash deposit or withdrawal.
+/// Deposit or withdraw bank cash, or move cash to collateral.
 Future<void> showCashSheet(
   BuildContext context,
   HubApi api, {
   required VoidCallback onSaved,
+  String kind = 'deposit',
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    builder: (_) => _CashSheet(api: api, onSaved: onSaved),
+    builder: (_) => _CashSheet(api: api, onSaved: onSaved, kind: kind),
   );
 }
 
@@ -166,10 +167,15 @@ class _TradeSheetState extends State<_TradeSheet> {
 }
 
 class _CashSheet extends StatefulWidget {
-  const _CashSheet({required this.api, required this.onSaved});
+  const _CashSheet({
+    required this.api,
+    required this.onSaved,
+    required this.kind,
+  });
 
   final HubApi api;
   final VoidCallback onSaved;
+  final String kind;
 
   @override
   State<_CashSheet> createState() => _CashSheetState();
@@ -179,7 +185,7 @@ class _CashSheetState extends State<_CashSheet> {
   final _form = GlobalKey<FormState>();
   final _amount = TextEditingController();
   final _note = TextEditingController();
-  String _kind = 'deposit';
+  late String _kind = widget.kind;
   bool _saving = false;
 
   @override
@@ -232,10 +238,21 @@ class _CashSheetState extends State<_CashSheet> {
               label: Text('Withdraw'),
               icon: Icon(Icons.remove),
             ),
+            ButtonSegment(
+              value: 'transfer',
+              label: Text('To collateral'),
+              icon: Icon(Icons.east),
+            ),
           ],
           selected: {_kind},
           onSelectionChanged: (s) => setState(() => _kind = s.first),
         ),
+        const SizedBox(height: 8),
+        Text(switch (_kind) {
+          'deposit' => 'Money added to your bank cash.',
+          'withdraw' => 'Money taken out of your bank cash.',
+          _ => 'Moves money from cash to collateral so the bot can buy.',
+        }, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 12),
         TextFormField(
           controller: _amount,

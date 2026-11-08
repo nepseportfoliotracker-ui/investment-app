@@ -98,9 +98,14 @@ class HubApi {
   Future<Portfolio> portfolio() async =>
       Portfolio.fromJson(await _get('/api/portfolio') as Map<String, dynamic>);
 
-  Future<void> saveSetup(double cash, List<OpeningHolding> holdings) async {
+  Future<void> saveSetup(
+    double cash,
+    double collateral,
+    List<OpeningHolding> holdings,
+  ) async {
     await _post('/api/setup', {
       'cash': cash,
+      'collateral': collateral,
       'holdings': holdings.map((h) => h.toJson()).toList(),
     });
   }

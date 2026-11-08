@@ -66,6 +66,19 @@ class _PortfolioTabState extends State<PortfolioTab> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.east),
+              title: const Text('Move cash to collateral'),
+              onTap: () {
+                Navigator.pop(ctx);
+                showCashSheet(
+                  context,
+                  widget.api,
+                  onSaved: _changed,
+                  kind: 'transfer',
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.account_balance_wallet),
               title: const Text('Deposit or withdraw cash'),
               onTap: () {
@@ -145,7 +158,7 @@ class _PortfolioTabState extends State<PortfolioTab> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Total (cash + holdings + collateral)',
+                  'Total (cash + collateral + holdings)',
                   style: theme.textTheme.labelLarge,
                 ),
                 Text(money(total), style: theme.textTheme.headlineMedium),
@@ -161,19 +174,14 @@ class _PortfolioTabState extends State<PortfolioTab> {
                 Row(
                   children: [
                     Expanded(child: _stat('Cash', money(p.cash))),
-                    Expanded(child: _stat('Holdings', money(p.investedCost))),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
                     Expanded(
                       child: _stat(
                         'Collateral',
-                        c.collateral == null ? '-' : money(c.collateral!),
+                        money(c.collateral ?? 0),
+                        color: (c.collateral ?? 0) < 0 ? Colors.red : null,
                       ),
                     ),
-                    Expanded(child: _stat('Checked', shortTime(c.checkedAt))),
+                    Expanded(child: _stat('Holdings', money(p.investedCost))),
                   ],
                 ),
               ],
@@ -189,47 +197,26 @@ class _PortfolioTabState extends State<PortfolioTab> {
                 color: theme.colorScheme.onErrorContainer,
               ),
               title: Text(
-                'Deposit ${money(deposit)} to collateral',
+                'Move cash to collateral',
                 style: TextStyle(
                   color: theme.colorScheme.onErrorContainer,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-          ),
-        if (!c.fresh && c.collateral != null)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              'Collateral not checked today, so no deposit figure yet.',
-              style: TextStyle(fontStyle: FontStyle.italic),
-            ),
-          ),
-        if (p.mismatches.isNotEmpty)
-          Card(
-            color: theme.colorScheme.tertiaryContainer,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Differs from the bot\'s ledger',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  for (final m in p.mismatches)
-                    Text(
-                      '${m.symbol}: you have ${m.appQty}, bot ledger has ${m.botQty}',
-                    ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Check the trade history. A trade may be missing or dated before setup.',
-                  ),
-                ],
+              subtitle: Text(
+                "Today's buys need ${money(c.required)}. "
+                'Cash available ${money(deposit)}.',
+                style: TextStyle(color: theme.colorScheme.onErrorContainer),
+              ),
+              onTap: () => showCashSheet(
+                context,
+                widget.api,
+                onSaved: _changed,
+                kind: 'transfer',
               ),
             ),
           ),
+        // Holdings strictly follow the bot's ledger, so no mismatch warning.
         const Padding(
           padding: EdgeInsets.fromLTRB(4, 16, 4, 4),
           child: Text(
@@ -263,11 +250,14 @@ class _PortfolioTabState extends State<PortfolioTab> {
     );
   }
 
-  Widget _stat(String label, String value) => Column(
+  Widget _stat(String label, String value, {Color? color}) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(label, style: Theme.of(context).textTheme.bodySmall),
-      Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+      Text(
+        value,
+        style: TextStyle(fontWeight: FontWeight.w600, color: color),
+      ),
     ],
   );
 }

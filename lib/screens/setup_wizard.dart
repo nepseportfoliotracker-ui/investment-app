@@ -4,7 +4,7 @@ import '../api.dart';
 import '../format.dart';
 import '../models.dart';
 
-/// First-start setup: how much cash you have and which shares you already hold.
+/// First-start setup: bank cash, broker collateral, and the shares you already hold.
 /// Trades from the bot and from you are tracked from this moment on.
 class SetupWizard extends StatefulWidget {
   const SetupWizard({super.key, required this.api, required this.onDone});
@@ -19,6 +19,7 @@ class SetupWizard extends StatefulWidget {
 class _SetupWizardState extends State<SetupWizard> {
   int _step = 0;
   final _cashCtrl = TextEditingController();
+  final _collateralCtrl = TextEditingController();
   final _holdings = <OpeningHolding>[];
   bool _saving = false;
   String? _error;
@@ -26,11 +27,17 @@ class _SetupWizardState extends State<SetupWizard> {
   @override
   void dispose() {
     _cashCtrl.dispose();
+    _collateralCtrl.dispose();
     super.dispose();
   }
 
-  double? get _cash =>
-      double.tryParse(_cashCtrl.text.replaceAll(',', '').trim());
+  static double? _parse(TextEditingController c) {
+    final text = c.text.replaceAll(',', '').trim();
+    return text.isEmpty ? 0 : double.tryParse(text);
+  }
+
+  double? get _cash => _parse(_cashCtrl);
+  double? get _collateral => _parse(_collateralCtrl);
 
   double get _cost => _holdings.fold(0.0, (s, h) => s + h.qty * h.avgPrice);
 
@@ -48,7 +55,7 @@ class _SetupWizardState extends State<SetupWizard> {
       _error = null;
     });
     try {
-      await widget.api.saveSetup(_cash ?? 0, _holdings);
+      await widget.api.saveSetup(_cash ?? 0, _collateral ?? 0, _holdings);
       if (!mounted) return;
       widget.onDone();
     } catch (e) {
@@ -59,7 +66,8 @@ class _SetupWizardState extends State<SetupWizard> {
   }
 
   bool get _canContinue => switch (_step) {
-    0 => _cash != null && _cash! >= 0,
+    0 =>
+      _cash != null && _cash! >= 0 && _collateral != null && _collateral! >= 0,
     _ => true,
   };
 
@@ -106,8 +114,8 @@ class _SetupWizardState extends State<SetupWizard> {
         ),
         steps: [
           Step(
-            title: const Text('Cash you have'),
-            subtitle: const Text('Money in your broker account now'),
+            title: const Text('Cash and collateral'),
+            subtitle: const Text('Money in your bank and your broker collateral'),
             isActive: _step >= 0,
             state: _step > 0 ? StepState.complete : StepState.indexed,
             content: Column(
@@ -119,14 +127,27 @@ class _SetupWizardState extends State<SetupWizard> {
                     decimal: true,
                   ),
                   decoration: const InputDecoration(
-                    labelText: 'Available cash (Rs)',
+                    labelText: 'Cash in bank (Rs)',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _collateralCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Collateral at broker (Rs)',
                     border: OutlineInputBorder(),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Leave it as 0 if you are not sure. You can record deposits later.',
+                  'Sells add to cash. Buys are paid from collateral. '
+                  'You can move cash to collateral any time.',
                 ),
               ],
             ),
@@ -176,6 +197,7 @@ class _SetupWizardState extends State<SetupWizard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Cash: ${money(_cash ?? 0)}'),
+                Text('Collateral: ${money(_collateral ?? 0)}'),
                 Text('Holdings: ${_holdings.length} (cost ${money(_cost)})'),
                 const SizedBox(height: 12),
                 Text(
