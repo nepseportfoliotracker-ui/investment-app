@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../format.dart';
 import '../models.dart';
+import '../theme.dart';
 
 /// First-start setup: bank cash, broker collateral, and the shares you already hold.
 /// Trades from the bot and from you are tracked from this moment on.
@@ -75,8 +76,9 @@ class _SetupWizardState extends State<SetupWizard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Set up your portfolio')),
+      appBar: AppBar(title: const Text('SET UP PORTFOLIO')),
       body: Stepper(
+        connectorColor: const WidgetStatePropertyAll(T.line),
         currentStep: _step,
         onStepTapped: (i) => setState(() => _step = i),
         onStepContinue: () {
@@ -115,7 +117,9 @@ class _SetupWizardState extends State<SetupWizard> {
         steps: [
           Step(
             title: const Text('Cash and collateral'),
-            subtitle: const Text('Money in your bank and your broker collateral'),
+            subtitle: const Text(
+              'Money in your bank and your broker collateral',
+            ),
             isActive: _step >= 0,
             state: _step > 0 ? StepState.complete : StepState.indexed,
             content: Column(
@@ -128,7 +132,6 @@ class _SetupWizardState extends State<SetupWizard> {
                   ),
                   decoration: const InputDecoration(
                     labelText: 'Cash in bank (Rs)',
-                    border: OutlineInputBorder(),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -140,7 +143,6 @@ class _SetupWizardState extends State<SetupWizard> {
                   ),
                   decoration: const InputDecoration(
                     labelText: 'Collateral at broker (Rs)',
-                    border: OutlineInputBorder(),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -174,9 +176,15 @@ class _SetupWizardState extends State<SetupWizard> {
                     contentPadding: EdgeInsets.zero,
                     title: Text(
                       h.symbol,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: T.sans(
+                        weight: FontWeight.w600,
+                        color: T.textStrong,
+                      ),
                     ),
-                    subtitle: Text('${h.qty} units @ ${money(h.avgPrice)}'),
+                    subtitle: Text(
+                      '${h.qty} units @ ${money(h.avgPrice)}',
+                      style: T.mono(color: T.muted),
+                    ),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete_outline),
                       onPressed: () => setState(() => _holdings.remove(h)),
@@ -207,10 +215,7 @@ class _SetupWizardState extends State<SetupWizard> {
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
-                  Text(
-                    _error!,
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
+                  Text(_error!, style: T.sans(size: 12, color: T.down)),
                 ],
               ],
             ),

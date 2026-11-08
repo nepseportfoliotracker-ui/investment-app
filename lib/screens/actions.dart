@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../api.dart';
 import '../format.dart';
+import '../theme.dart';
+import '../ui.dart';
 
 /// Record a buy or sell you made outside the bot.
 Future<void> showTradeSheet(
@@ -109,21 +111,10 @@ class _TradeSheetState extends State<_TradeSheet> {
       saving: _saving,
       onSave: _save,
       children: [
-        SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(
-              value: 'buy',
-              label: Text('Buy'),
-              icon: Icon(Icons.arrow_downward),
-            ),
-            ButtonSegment(
-              value: 'sell',
-              label: Text('Sell'),
-              icon: Icon(Icons.arrow_upward),
-            ),
-          ],
-          selected: {_side},
-          onSelectionChanged: (s) => setState(() => _side = s.first),
+        Seg<String>(
+          value: _side,
+          options: const [('buy', 'Buy'), ('sell', 'Sell')],
+          onChanged: (v) => setState(() => _side = v),
         ),
         const SizedBox(height: 12),
         TextFormField(
@@ -148,13 +139,19 @@ class _TradeSheetState extends State<_TradeSheet> {
               ? null
               : 'Enter a price above 0',
         ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.event),
-          title: Text(_date == null ? 'Today' : isoDate(_date!)),
-          trailing: TextButton(
-            onPressed: _pickDate,
-            child: const Text('Change date'),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Text('Date', style: T.sans(size: 12, color: T.muted)),
+              const SizedBox(width: 16),
+              Text(
+                _date == null ? 'Today' : isoDate(_date!),
+                style: T.mono(color: T.textStrong),
+              ),
+              const Spacer(),
+              LinkButton('Change', onPressed: _pickDate),
+            ],
           ),
         ),
         TextFormField(
@@ -226,33 +223,21 @@ class _CashSheetState extends State<_CashSheet> {
       saving: _saving,
       onSave: _save,
       children: [
-        SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(
-              value: 'deposit',
-              label: Text('Deposit'),
-              icon: Icon(Icons.add),
-            ),
-            ButtonSegment(
-              value: 'withdraw',
-              label: Text('Withdraw'),
-              icon: Icon(Icons.remove),
-            ),
-            ButtonSegment(
-              value: 'transfer',
-              label: Text('To collateral'),
-              icon: Icon(Icons.east),
-            ),
+        Seg<String>(
+          value: _kind,
+          options: const [
+            ('deposit', 'Deposit'),
+            ('withdraw', 'Withdraw'),
+            ('transfer', 'To collateral'),
           ],
-          selected: {_kind},
-          onSelectionChanged: (s) => setState(() => _kind = s.first),
+          onChanged: (v) => setState(() => _kind = v),
         ),
         const SizedBox(height: 8),
         Text(switch (_kind) {
           'deposit' => 'Money added to your bank cash.',
           'withdraw' => 'Money taken out of your bank cash.',
           _ => 'Moves money from cash to collateral so the bot can buy.',
-        }, style: Theme.of(context).textTheme.bodySmall),
+        }, style: T.sans(size: 12, color: T.faint)),
         const SizedBox(height: 12),
         TextFormField(
           controller: _amount,
@@ -293,7 +278,7 @@ class _Sheet extends StatelessWidget {
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
-        top: 16,
+        top: 24,
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
       child: Form(
@@ -303,10 +288,17 @@ class _Sheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 12),
-              ...children,
+              Text(
+                title,
+                style: T.sans(
+                  size: T.fsLg,
+                  weight: FontWeight.w600,
+                  color: T.textStrong,
+                ),
+              ),
               const SizedBox(height: 16),
+              ...children,
+              const SizedBox(height: 24),
               FilledButton(
                 onPressed: saving ? null : onSave,
                 child: saving

@@ -7,6 +7,7 @@ import 'push.dart';
 import 'screens/home_screen.dart';
 import 'screens/setup_screen.dart';
 import 'screens/setup_wizard.dart';
+import 'theme.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
@@ -34,7 +35,8 @@ class InvestmentApp extends StatelessWidget {
       title: 'Investments',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: scaffoldMessengerKey,
-      theme: ThemeData(colorSchemeSeed: Colors.teal, useMaterial3: true),
+      theme: appTheme(),
+      themeMode: ThemeMode.dark,
       home: const _Root(),
     );
   }
@@ -85,7 +87,15 @@ class _RootState extends State<_Root> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
     }
     final config = _config;
     if (config == null) {

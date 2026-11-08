@@ -14,3 +14,6 @@ String shortTime(String? iso) {
   final s = iso.replaceAll('T', ' ');
   return s.length >= 16 ? s.substring(0, 16) : s;
 }
+
+/// 1234.5 -> "1,234.50" (no currency, for dense tables).
+String plain(num value) => _money.format(value);

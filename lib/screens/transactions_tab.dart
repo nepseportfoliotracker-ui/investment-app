@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../format.dart';
 import '../models.dart';
+import '../theme.dart';
+import '../ui.dart';
 
 class TransactionsTab extends StatefulWidget {
   const TransactionsTab({super.key, required this.api, required this.refresh});
@@ -17,6 +19,7 @@ class TransactionsTab extends StatefulWidget {
 
 class _TransactionsTabState extends State<TransactionsTab> {
   late Future<List<TradeEvent>> _future = widget.api.transactions();
+  String _filter = 'all';
 
   @override
   void initState() {
@@ -34,90 +37,139 @@ class _TransactionsTabState extends State<TransactionsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return RefreshIndicator(
       onRefresh: () async {
         _reload();
         await _future;
       },
+      color: T.accent,
+      backgroundColor: T.surface,
       child: FutureBuilder<List<TradeEvent>>(
         future: _future,
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
-            return ListView(
-              children: const [
-                SizedBox(
-                  height: 400,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ],
-            );
+            return loadingBody();
           }
           if (snap.hasError) {
-            return ListView(
-              children: [
-                SizedBox(
-                  height: 400,
-                  child: Center(child: Text('${snap.error}')),
-                ),
-              ],
-            );
+            return messageBody('Trades', '${snap.error}', error: true);
           }
-          final rows = snap.data!;
-          if (rows.isEmpty) {
-            return ListView(
-              children: const [
+          final all = snap.data!;
+          final rows = switch (_filter) {
+            'buy' => all.where((t) => t.isBuy).toList(),
+            'sell' => all.where((t) => !t.isBuy).toList(),
+            _ => all,
+          };
+          final buys = all.where((t) => t.isBuy).length;
+          return ListView(
+            padding: pagePad,
+            children: [
+              const PageHead(
+                'Trades',
+                lede: 'Bot fills and the trades you record, newest first.',
+              ),
+              Seg<String>(
+                value: _filter,
+                options: [
+                  ('all', 'All ${all.length}'),
+                  ('buy', 'Buys $buys'),
+                  ('sell', 'Sells ${all.length - buys}'),
+                ],
+                onChanged: (v) => setState(() => _filter = v),
+              ),
+              if (rows.isEmpty)
                 Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Text(
                     'No trades yet. Bot fills appear here as they happen.',
+                    style: T.sans(color: T.muted),
                   ),
                 ),
-              ],
-            );
-          }
-          return ListView.builder(
-            itemCount: rows.length,
-            itemBuilder: (context, i) {
-              final t = rows[i];
-              final color = t.applied
-                  ? (t.isBuy ? Colors.green : Colors.red)
-                  : theme.disabledColor;
-              final tags = [
-                t.isManual ? 'Manual' : 'Bot',
-                if (!t.applied) 'before setup, not counted',
-              ].join(' · ');
-              return ListTile(
-                leading: Icon(
-                  t.isBuy ? Icons.arrow_downward : Icons.arrow_upward,
-                  color: color,
-                ),
-                title: Text(
-                  '${t.isBuy ? 'Bought' : 'Sold'} ${t.symbol} x${t.qty}',
-                  style: TextStyle(
-                    color: t.applied ? null : theme.disabledColor,
-                  ),
-                ),
-                subtitle: Text('${shortTime(t.ts)}  ·  $tags'),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(money(t.qty * t.price)),
-                    if (!t.isBuy && t.pnl != null)
-                      Text(
-                        '${t.pnl! >= 0 ? '+' : ''}${money(t.pnl!)}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: t.pnl! >= 0 ? Colors.green : Colors.red,
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
+              for (final t in rows) _TradeRow(t),
+            ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _TradeRow extends StatelessWidget {
+  const _TradeRow(this.t);
+
+  final TradeEvent t;
+
+  @override
+  Widget build(BuildContext context) {
+    final dim = !t.applied;
+    final meta = [
+      shortTime(t.ts),
+      t.isManual ? 'Manual' : 'Bot',
+      if (dim) 'before setup, not counted',
+    ].join('  ·  ');
+    return Opacity(
+      opacity: dim ? .5 : 1,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: T.line)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 40,
+              child: Text(
+                t.isBuy ? 'BUY' : 'SELL',
+                style: T.sans(
+                  size: T.fsXs,
+                  weight: FontWeight.w600,
+                  letterSpacing: .04 * 11,
+                  color: t.isBuy ? T.up : T.down,
+                  height: 20 / 11,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: t.symbol,
+                          style: T.sans(
+                            weight: FontWeight.w600,
+                            color: T.textStrong,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '   ${t.qty} @ ${plain(t.price)}',
+                          style: T.mono(color: T.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(meta, style: T.sans(size: 11, color: T.faint)),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(plain(t.qty * t.price), style: T.mono(color: T.text)),
+                if (!t.isBuy && t.pnl != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${t.pnl! >= 0 ? '+' : ''}${plain(t.pnl!)}',
+                    style: T.mono(size: 11, color: T.direction(t.pnl!)),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

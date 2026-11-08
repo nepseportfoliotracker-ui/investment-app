@@ -7,6 +7,7 @@ import 'portfolio_tab.dart';
 import 'setup_screen.dart';
 import 'setup_wizard.dart';
 import 'transactions_tab.dart';
+import '../theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -67,17 +68,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final titles = ['Portfolio', 'Trades', 'Alerts'];
     return Scaffold(
       appBar: AppBar(
-        title: Text(titles[_index]),
+        toolbarHeight: 56,
+        title: const Text('NEPSE PORTFOLIO'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, size: 20),
             tooltip: 'Refresh',
             onPressed: _bump,
           ),
           PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, size: 20),
             onSelected: (v) {
               if (v == 'setup') _openWizard();
               if (v == 'hub') {
@@ -117,22 +119,27 @@ class _HomeScreenState extends State<HomeScreen> {
           AlertsTab(api: _api, refresh: _refresh),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.pie_chart_outline),
-            selectedIcon: Icon(Icons.pie_chart),
-            label: 'Portfolio',
-          ),
-          NavigationDestination(icon: Icon(Icons.swap_vert), label: 'Trades'),
-          NavigationDestination(
-            icon: Icon(Icons.notifications_outlined),
-            selectedIcon: Icon(Icons.notifications),
-            label: 'Alerts',
-          ),
-        ],
+      bottomNavigationBar: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: T.line)),
+        ),
+        child: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: (i) => setState(() => _index = i),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.pie_chart_outline),
+              selectedIcon: Icon(Icons.pie_chart),
+              label: 'Portfolio',
+            ),
+            NavigationDestination(icon: Icon(Icons.swap_vert), label: 'Trades'),
+            NavigationDestination(
+              icon: Icon(Icons.notifications_outlined),
+              selectedIcon: Icon(Icons.notifications),
+              label: 'Alerts',
+            ),
+          ],
+        ),
       ),
     );
   }

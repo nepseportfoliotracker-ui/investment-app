@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../api.dart';
+import '../theme.dart';
+import '../ui.dart';
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key, this.initial, required this.onSaved});
@@ -51,64 +53,51 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Connect to hub')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              const Text(
-                'Enter the address of the investment hub and its access token. '
-                'On the same Wi-Fi use the PC address, e.g. http://192.168.1.20:8080. '
-                'Otherwise use the server address.',
+      appBar: AppBar(title: const Text('NEPSE PORTFOLIO')),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: pagePad,
+          children: [
+            const PageHead(
+              'Connect',
+              lede:
+                  'The address of your investment hub and its access token, '
+                  'e.g. https://nepse-hub-production.up.railway.app',
+            ),
+            TextFormField(
+              controller: _url,
+              keyboardType: TextInputType.url,
+              decoration: const InputDecoration(labelText: 'Hub URL'),
+              validator: (v) => (v == null || !v.trim().startsWith('http'))
+                  ? 'Must start with http:// or https://'
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _token,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Access token'),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Required' : null,
+            ),
+            const SizedBox(height: 32),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(_error!, style: T.sans(size: 12, color: T.down)),
               ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _url,
-                keyboardType: TextInputType.url,
-                decoration: const InputDecoration(
-                  labelText: 'Hub URL',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => (v == null || !v.trim().startsWith('http'))
-                    ? 'Must start with http:// or https://'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _token,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Access token',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 20),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    _error!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ),
-              FilledButton(
-                onPressed: _busy ? null : _save,
-                child: _busy
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Connect'),
-              ),
-            ],
-          ),
+            FilledButton(
+              onPressed: _busy ? null : _save,
+              child: _busy
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Connect'),
+            ),
+          ],
         ),
       ),
     );
