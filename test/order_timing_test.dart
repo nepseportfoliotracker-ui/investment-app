@@ -20,4 +20,12 @@ void main() {
     expect(orderTiming(npt(2026, 11, 13, 13, 0)), next);
     expect(orderTiming(npt(2026, 11, 14, 9, 0)), next);
   });
+  test('orders page status line', () {
+    expect(orderWindowStatus(npt(2026, 11, 8, 13, 0)), 'Orders run now, until 14:55.');
+    expect(orderWindowStatus(npt(2026, 11, 8, 9, 0)), 'Next run: after 12:10 today.');
+    expect(
+      orderWindowStatus(npt(2026, 11, 13, 13, 0)),
+      'Next run: after 12:10 on the next trading day.',
+    );
+  });
 }

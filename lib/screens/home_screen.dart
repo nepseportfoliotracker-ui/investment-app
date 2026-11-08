@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../push.dart';
 import 'alerts_tab.dart';
+import 'orders_tab.dart';
 import 'portfolio_tab.dart';
 import 'setup_screen.dart';
 import 'setup_wizard.dart';
@@ -114,7 +115,9 @@ class _HomeScreenState extends State<HomeScreen> {
             refresh: _refresh,
             onChanged: _bump,
             onSetup: _openWizard,
+            onPlaceOrder: () => setState(() => _index = 1),
           ),
+          OrdersTab(api: _api, refresh: _refresh, onChanged: _bump),
           TransactionsTab(api: _api, refresh: _refresh),
           AlertsTab(api: _api, refresh: _refresh),
         ],
@@ -131,6 +134,11 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(Icons.pie_chart_outline),
               selectedIcon: Icon(Icons.pie_chart),
               label: 'Portfolio',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.shopping_cart_outlined),
+              selectedIcon: Icon(Icons.shopping_cart),
+              label: 'Orders',
             ),
             NavigationDestination(icon: Icon(Icons.swap_vert), label: 'Trades'),
             NavigationDestination(

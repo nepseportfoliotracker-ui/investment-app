@@ -15,12 +15,16 @@ class PortfolioTab extends StatefulWidget {
     required this.refresh,
     required this.onChanged,
     required this.onSetup,
+    required this.onPlaceOrder,
   });
 
   final HubApi api;
   final ValueListenable<int> refresh;
   final VoidCallback onChanged;
   final VoidCallback onSetup;
+
+  /// Switches to the Orders tab.
+  final VoidCallback onPlaceOrder;
 
   @override
   State<PortfolioTab> createState() => _PortfolioTabState();
@@ -96,14 +100,7 @@ class _PortfolioTabState extends State<PortfolioTab> {
               item(
                 'Place order',
                 'A real order in TMS, run by the bot',
-                () => showOrderSheet(
-                  context,
-                  widget.api,
-                  held: {
-                    for (final h in p?.holdings ?? <Holding>[]) h.symbol: h.qty,
-                  },
-                  onSaved: _changed,
-                ),
+                widget.onPlaceOrder,
               ),
               item(
                 'Record a buy or sell',
