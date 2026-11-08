@@ -89,6 +89,7 @@ class _AlertRow extends StatelessWidget {
 
   String get _tag => switch (a.kind) {
     'collateral' => 'COLLATERAL',
+    'order' => 'ORDER',
     'trade' =>
       a.title.startsWith('Bought')
           ? 'BUY'
@@ -102,6 +103,7 @@ class _AlertRow extends StatelessWidget {
     'BUY' => T.up,
     'SELL' => T.down,
     'COLLATERAL' => T.warn,
+    'ORDER' => T.accent,
     _ => T.muted,
   };
 

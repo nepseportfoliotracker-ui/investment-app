@@ -163,6 +163,27 @@ class HubApi {
     await _post('/api/alerts/$alertId/read');
   }
 
+  /// Queue a real TMS order; the bot runs it after its own trade window.
+  Future<AppOrder> placeOrder({
+    required String side,
+    required String symbol,
+    required int qty,
+  }) async => AppOrder.fromJson(
+    await _post('/api/orders', {'side': side, 'symbol': symbol, 'qty': qty})
+        as Map<String, dynamic>,
+  );
+
+  Future<List<AppOrder>> orders({int limit = 100}) async {
+    final rows = await _get('/api/orders?limit=$limit') as List;
+    return rows
+        .map((e) => AppOrder.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> cancelOrder(int id) async {
+    await _post('/api/orders/$id/cancel');
+  }
+
   Future<void> registerDevice(String fcmToken) async {
     await _post('/api/devices', {'token': fcmToken});
   }

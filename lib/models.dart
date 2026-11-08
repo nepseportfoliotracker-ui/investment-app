@@ -205,3 +205,50 @@ class AppAlert {
     read: j['read'] == true,
   );
 }
+
+/// A real TMS order placed from the app; the bot runs it 12:10-14:55.
+class AppOrder {
+  AppOrder({
+    required this.id,
+    required this.createdAt,
+    required this.side,
+    required this.symbol,
+    required this.qty,
+    required this.status,
+    required this.filledQty,
+    this.price,
+    this.reason,
+    this.finishedAt,
+  });
+
+  final int id;
+  final String createdAt;
+  final String side;
+  final String symbol;
+  final int qty;
+
+  /// queued, claimed, filled, partial, failed, cancelled, expired, unknown
+  final String status;
+  final int filledQty;
+  final double? price;
+  final String? reason;
+  final String? finishedAt;
+
+  bool get isBuy => side == 'buy';
+  bool get canCancel => status == 'queued';
+
+  factory AppOrder.fromJson(Map<String, dynamic> j) => AppOrder(
+    id: _int(j['id']),
+    createdAt: '${j['created_at'] ?? ''}',
+    side: '${j['side']}',
+    symbol: '${j['symbol']}',
+    qty: _int(j['qty']),
+    status: '${j['status']}',
+    filledQty: _int(j['filled_qty']),
+    price: j['price'] == null ? null : _num(j['price']),
+    reason: (j['reason'] == null || '${j['reason']}'.isEmpty)
+        ? null
+        : '${j['reason']}',
+    finishedAt: j['finished_at'] as String?,
+  );
+}

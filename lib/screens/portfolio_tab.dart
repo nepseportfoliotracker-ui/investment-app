@@ -94,7 +94,19 @@ class _PortfolioTabState extends State<PortfolioTab> {
             children: [
               const SectionLabel('Record', first: true),
               item(
-                'Buy or sell',
+                'Place order',
+                'A real order in TMS, run by the bot',
+                () => showOrderSheet(
+                  context,
+                  widget.api,
+                  held: {
+                    for (final h in p?.holdings ?? <Holding>[]) h.symbol: h.qty,
+                  },
+                  onSaved: _changed,
+                ),
+              ),
+              item(
+                'Record a buy or sell',
                 'A trade made outside the bot',
                 () => showTradeSheet(context, widget.api, onSaved: _changed),
               ),
@@ -213,8 +225,7 @@ class _PortfolioTabState extends State<PortfolioTab> {
         if (deposit != null && deposit > 0)
           Notice(
             title: 'Move cash to collateral',
-            body:
-                'Collateral ${money(coll)}, cash ${money(deposit)}.',
+            body: 'Collateral ${money(coll)}, cash ${money(deposit)}.',
             action: 'Move',
             onAction: _transfer,
           ),

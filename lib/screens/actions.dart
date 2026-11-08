@@ -438,3 +438,157 @@ class _Sheet extends StatelessWidget {
     );
   }
 }
+
+/// When an order sent now will run, in Nepal time (UTC+5:45).
+/// The bot runs app orders 12:10-14:55, Sunday to Thursday.
+String orderTiming([DateTime? nowUtc]) {
+  final npt = (nowUtc ?? DateTime.now().toUtc()).add(
+    const Duration(hours: 5, minutes: 45),
+  );
+  final tradingDay =
+      npt.weekday != DateTime.friday && npt.weekday != DateTime.saturday;
+  final minutes = npt.hour * 60 + npt.minute;
+  const start = 12 * 60 + 10, end = 14 * 60 + 55;
+  if (tradingDay && minutes >= start && minutes < end) {
+    return 'It runs within about a minute.';
+  }
+  if (tradingDay && minutes < start) return 'It runs after 12:10 today.';
+  return 'It runs after 12:10 on the next trading day.';
+}
+
+/// Place a real order in TMS through the bot, at market price.
+Future<void> showOrderSheet(
+  BuildContext context,
+  HubApi api, {
+  required Map<String, int> held,
+  required VoidCallback onSaved,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => _OrderSheet(api: api, held: held, onSaved: onSaved),
+  );
+}
+
+class _OrderSheet extends StatefulWidget {
+  const _OrderSheet({
+    required this.api,
+    required this.held,
+    required this.onSaved,
+  });
+
+  final HubApi api;
+  final Map<String, int> held;
+  final VoidCallback onSaved;
+
+  @override
+  State<_OrderSheet> createState() => _OrderSheetState();
+}
+
+class _OrderSheetState extends State<_OrderSheet> {
+  final _form = GlobalKey<FormState>();
+  final _symbol = TextEditingController();
+  final _qty = TextEditingController();
+  String _side = 'buy';
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _symbol.dispose();
+    _qty.dispose();
+    super.dispose();
+  }
+
+  String get _sym => _symbol.text.trim().toUpperCase();
+
+  Future<void> _save() async {
+    if (!_form.currentState!.validate()) return;
+    final qty = int.parse(_qty.text.trim());
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Place a real order?'),
+        content: Text(
+          '${_side.toUpperCase()} $qty $_sym in TMS at market price. '
+          'The bot prices it like its own trades and cancels anything '
+          'unfilled at 14:55. ${orderTiming()}',
+          style: T.sans(height: 20 / 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Place ${_side == 'buy' ? 'buy' : 'sell'}'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      await widget.api.placeOrder(side: _side, symbol: _sym, qty: qty);
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onSaved();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Order queued. ${orderTiming()}')));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final held = widget.held[_sym];
+    return _Sheet(
+      title: 'Place order',
+      form: _form,
+      saving: _saving,
+      onSave: _save,
+      children: [
+        Seg<String>(
+          value: _side,
+          options: const [('buy', 'Buy'), ('sell', 'Sell')],
+          onChanged: (v) => setState(() => _side = v),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'A real order in TMS at market price, run by the bot after its '
+          'own trades (12:10-14:55).',
+          style: T.sans(size: 12, color: T.faint, height: 16 / 12),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _symbol,
+          textCapitalization: TextCapitalization.characters,
+          decoration: const InputDecoration(labelText: 'Symbol'),
+          onChanged: (_) => setState(() {}),
+          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+        ),
+        TextFormField(
+          controller: _qty,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: 'Units',
+            helperText: _side == 'sell' && _sym.isNotEmpty
+                ? 'You hold ${held ?? 0}'
+                : null,
+          ),
+          validator: (v) => (int.tryParse(v?.trim() ?? '') ?? 0) > 0
+              ? null
+              : 'Enter units above 0',
+        ),
+      ],
+    );
+  }
+}
