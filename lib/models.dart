@@ -252,3 +252,19 @@ class AppOrder {
     finishedAt: j['finished_at'] as String?,
   );
 }
+
+/// The two stock lists the bot reads at its 11:10 session.
+class Watchlists {
+  Watchlists({required this.priority, required this.buyFirst});
+
+  /// One of these is bought per day when it has a BUY signal.
+  final List<String> priority;
+
+  /// Bought once at 11:10 even without a BUY signal; skipped while held.
+  final List<String> buyFirst;
+
+  factory Watchlists.fromJson(Map<String, dynamic> j) => Watchlists(
+    priority: [for (final s in (j['priority'] as List? ?? [])) '$s'],
+    buyFirst: [for (final s in (j['buy_first'] as List? ?? [])) '$s'],
+  );
+}

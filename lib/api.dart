@@ -67,6 +67,13 @@ class HubApi {
     return _decode(res);
   }
 
+  Future<dynamic> _delete(String path) async {
+    final res = await http
+        .delete(_uri(path), headers: _headers)
+        .timeout(_timeout);
+    return _decode(res);
+  }
+
   dynamic _decode(http.Response res) {
     if (res.statusCode == 401) {
       throw HubException('Wrong access token');
@@ -183,6 +190,25 @@ class HubApi {
   Future<void> cancelOrder(int id) async {
     await _post('/api/orders/$id/cancel');
   }
+
+  /// Priority and Buy-first lists the bot reads at 11:10.
+  Future<Watchlists> watchlists() async =>
+      Watchlists.fromJson(await _get('/api/watchlists') as Map<String, dynamic>);
+
+  /// [list] is 'priority' or 'buy_first'.
+  Future<Watchlists> addToWatchlist(String list, String symbol) async =>
+      Watchlists.fromJson(
+        await _post('/api/watchlists/$list', {'symbol': symbol})
+            as Map<String, dynamic>,
+      );
+
+  Future<Watchlists> removeFromWatchlist(String list, String symbol) async =>
+      Watchlists.fromJson(
+        await _delete(
+              '/api/watchlists/$list/${Uri.encodeComponent(symbol)}',
+            )
+            as Map<String, dynamic>,
+      );
 
   Future<void> registerDevice(String fcmToken) async {
     await _post('/api/devices', {'token': fcmToken});
